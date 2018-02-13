@@ -14,14 +14,14 @@ import static com.github.nija123098.tipbot.utility.Database.BALANCES;
 public class WithdrawCommand extends AbstractCommand {
     @Override
     public String getHelp() {
-        return "Withdraws an amount of Dash with a specified address in the form ~withdraw <amount> <address>";
+        return "Withdraws an amount of ION with a specified address in the form ~withdraw <amount> <address>";
     }
 
     @Override
     public Command getCommand() {
         return (invoker, arguments, channel) -> {
             if (arguments.length == 0)
-                return "Please specify an amount to withdraw amount in dash and the address to send it to.";
+                return "Please specify an amount to withdraw amount in ION and the address to send it to.";
             BalanceCommand.update(invoker);
             double currentWallet = Double.parseDouble(Database.getValue(BALANCES, invoker, "0"));
             double withdrawAmount;
@@ -36,17 +36,20 @@ public class WithdrawCommand extends AbstractCommand {
                     return "Please specify an amount to withdraw and the address to send it to.";
                 }
             }
-            if (withdrawAmount < .0001D) return "Your withdraw amount must be greater than .0001 Dash";
+            if (withdrawAmount < .0001D) return "Your withdraw amount must be greater than .0001 ION";
             if (currentWallet < withdrawAmount) return "Your balance is not that high.";
             TransactionLog.log("withdrawing " + withdrawAmount + " for user " + invoker.getStringID());
-            String ret = sendMoney(arguments[firstAmount ? 1 : 0], withdrawAmount, invoker.getStringID());
-            if (ret.matches("([0-9a-f])+")) Database.setValue(BALANCES, invoker, String.valueOf(currentWallet - withdrawAmount));
+            if ((arguments[firstAmount ? 1 : 0]).length() == 3) return "You should leave out the unit type";
+            String ret = sendMoney(arguments[firstAmount ? 1 : 0], withdrawAmount, invoker.getStringID()).trim();
+            if (ret.matches("([0-9a-f])+")) {
+                Database.setValue(BALANCES, invoker, String.valueOf((float)(currentWallet - withdrawAmount)));
+            }
             return ret;
         };
     }
 
     private static String sendMoney(String address, Double amount, String userID) throws IOException, InterruptedException {
-        Process process = new ProcessBuilder("dash-cli", "sendtoaddress", "\"" + address + "\"", String.valueOf(amount), "\"Standard Withdraw\"", "\"" + userID + "\"", "true").start();
+        Process process = new ProcessBuilder("ion-cli", "sendtoaddress", address, String.valueOf(amount), "\"Standard Withdraw\"", "\"" + userID + "\"").start();
         BufferedReader inputReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
         process.waitFor();

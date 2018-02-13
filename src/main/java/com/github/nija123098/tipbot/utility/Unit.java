@@ -13,55 +13,55 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 public enum Unit {
-    BEER(() -> dollarToDash(3.99F)),
-    COFFEE(() -> dollarToDash(2.99F)),
-    TEA(() -> dollarToDash(2.99F)),
-    COOKIE(() -> dollarToDash(.50F)),
-    TOOTHPASTE(() -> dollarToDash(1.99F)),
-    DASH(() -> 1D),
-    USD(() -> dollarToDash(1), "$"),
-    EUR(() -> getUnitToDash("EUR"), "€"),
-    GBP(() -> getUnitToDash("GBP"), "£"),
-    RUB(() -> getUnitToDash("RUB"), (amount) -> amount + "₽", "₽", "ruble"),
-    CAD(() -> getUnitToDash("CAD"), "C$", "Can$"),
-    SGD(() -> getUnitToDash("SGD"), "S$"),
-    JPY(() -> getUnitToDash("JPY")),
-    AUD(() -> getUnitToDash("AUD"), "A$", "AU$"),
-    RON(() -> getUnitToDash("RON")),
-    CNY(() -> getUnitToDash("CNY")),
-    CZK(() -> getUnitToDash("CZK"), "Kč"),
-    CHF(() -> getUnitToDash("CHF")),
-    BGN(() -> getUnitToDash("BGN")),
-    PLN(() -> getUnitToDash("PLN"), "zł", "zloty", "zlotys"),
-    MYR(() -> getUnitToDash("MYR")),
-    ZAR(() -> getUnitToDash("ZAR")),// 14.46
-    SEK(() -> getUnitToDash("SEL"), "kr"),
-    INR(() -> getUnitToDash("INR"), "₹"),
-    HKD(() -> getUnitToDash("HKD"), "HK$"),
-    BRL(() -> getUnitToDash("BRL"), "R$"),
-    PKR(() -> getUnitToDash("PKR")),
-    MXN(() -> getUnitToDash("MXN"), "Mex$"),;
+    BEER(() -> dollarToION(3.99F)),
+    COFFEE(() -> dollarToION(2.99F)),
+    TEA(() -> dollarToION(2.99F)),
+    COOKIE(() -> dollarToION(.50F)),
+    TOOTHPASTE(() -> dollarToION(1.99F)),
+    ION(() -> 1D),
+    USD(() -> dollarToION(1), "$"),
+    EUR(() -> getUnitToION("EUR"), "€"),
+    GBP(() -> getUnitToION("GBP"), "£"),
+    RUB(() -> getUnitToION("RUB"), (amount) -> amount + "₽", "₽", "ruble"),
+    CAD(() -> getUnitToION("CAD"), "C$", "Can$"),
+    SGD(() -> getUnitToION("SGD"), "S$"),
+    JPY(() -> getUnitToION("JPY")),
+    AUD(() -> getUnitToION("AUD"), "A$", "AU$"),
+    RON(() -> getUnitToION("RON")),
+    CNY(() -> getUnitToION("CNY")),
+    CZK(() -> getUnitToION("CZK"), "Kč"),
+    CHF(() -> getUnitToION("CHF")),
+    BGN(() -> getUnitToION("BGN")),
+    PLN(() -> getUnitToION("PLN"), "zł", "zloty", "zlotys"),
+    MYR(() -> getUnitToION("MYR")),
+    ZAR(() -> getUnitToION("ZAR")),// 14.46
+    SEK(() -> getUnitToION("SEL"), "kr"),
+    INR(() -> getUnitToION("INR"), "₹"),
+    HKD(() -> getUnitToION("HKD"), "HK$"),
+    BRL(() -> getUnitToION("BRL"), "R$"),
+    PKR(() -> getUnitToION("PKR")),
+    MXN(() -> getUnitToION("MXN"), "Mex$"),;
 
-    Unit(ToDashAmount dashAmount, String... names) {
-        this(dashAmount, 2, names);
+    Unit(ToIONAmount ionAmount, String... names) {
+        this(ionAmount, 2, names);
     }
 
-    Unit(ToDashAmount dashAmount, int decimals, String... names) {
-        this(dashAmount, null, names);
+    Unit(ToIONAmount ionAmount, int decimals, String... names) {
+        this(ionAmount, null, names);
         this.display = (amount) -> {
             String decimal = Unit.displayAmount(amount, decimals);
             return this.names.size() > 1 ? this.names.get(1) + decimal : (decimal + " " + this.names.get(0));
         };
     }
 
-    Unit(ToDashAmount dashAmount, Function<Double, String> display, String... names) {
-        this.dashAmount = dashAmount;
+    Unit(ToIONAmount ionAmount, Function<Double, String> display, String... names) {
+        this.ionAmount = ionAmount;
         this.display = display;
         this.names.add(this.name());
         Collections.addAll(this.names, names);
     }
 
-    private final ToDashAmount dashAmount;
+    private final ToIONAmount ionAmount;
     private Function<Double, String> display;
     private final List<String> names = new ArrayList<>(1);
 
@@ -69,35 +69,36 @@ public enum Unit {
         return this.display.apply(amount);
     }
 
-    public Double getDashAmount() {
-        return this.dashAmount.getAmount();
+    public Double getIONAmount() {
+        return this.ionAmount.getAmount();
     }
 
-    private interface ToDashAmount {
+    private interface ToIONAmount {
         Double getAmount();
     }
 
-    private static double dollarToDash(float amount) {
-        return amount / getDashValue("USD");
+    private static double dollarToION(float amount) {
+        return amount / getIONValue("USD");
     }
 
-    public static double getUnitToDash(String currency) {
-        return 1 / getDashValue(currency);
+    public static double getUnitToION(String currency) {
+        return 1 / getIONValue(currency);
     }
 
-    private static final AtomicReference<Float> DASH_VALUE = new AtomicReference<>();
+    private static final AtomicReference<Float> ION_VALUE = new AtomicReference<>();
     private static final ScheduledExecutorService EXECUTOR_SERVICE = Executors.newScheduledThreadPool(1);
 
-    private static float getDashValue(String currency) {
-        if (DASH_VALUE.get() == null) {
+    private static float getIONValue(String currency) {
+        if (ION_VALUE.get() == null) {
             try {
-                EXECUTOR_SERVICE.schedule(() -> DASH_VALUE.set(null), 1, TimeUnit.MINUTES);
-                DASH_VALUE.set(Float.parseFloat(String.valueOf(new JsonParser().parse(Unirest.get("https://min-api.cryptocompare.com/data/price?fsym=DASH&tsyms=" + currency).asString().getBody()).getAsJsonObject().get(currency))));
+                EXECUTOR_SERVICE.schedule(() -> ION_VALUE.set(null), 1, TimeUnit.MINUTES);
+                // TODO
+                ION_VALUE.set(Float.parseFloat(String.valueOf(new JsonParser().parse(Unirest.get("https://min-api.cryptocompare.com/data/price?fsym=ION&tsyms=" + currency).asString().getBody()).getAsJsonObject().get(currency))));
             } catch (UnirestException e) {
                 throw new WrappingException(e);
             }
         }
-        return DASH_VALUE.get();
+        return ION_VALUE.get();
     }
 
     private static final Set<String> NAMES = new HashSet<>();

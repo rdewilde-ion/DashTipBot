@@ -7,7 +7,8 @@ import sx.blah.discord.handle.obj.IUser;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.github.nija123098.tipbot.utility.Database.*;
+import static com.github.nija123098.tipbot.utility.Database.PREFIXES;
+import static com.github.nija123098.tipbot.utility.Database.getValue;
 
 public class FormatHelper {
     private static final String BOT_MENTION;

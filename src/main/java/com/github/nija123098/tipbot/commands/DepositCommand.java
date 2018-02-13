@@ -15,15 +15,15 @@ public class DepositCommand extends AbstractCommand {
 
     @Override
     public String getHelp() {
-        return "Deposits Dash into the bot's wallet to enable tipping.";
+        return "Deposits ION into the bot's wallet to enable tipping.";
     }
 
     @Override
     public Command getCommand() {
         return (invoker, arguments, channel) -> {
             String address = Database.getValue(RECEIVING_ADDRESSES, invoker, null);
-            if (address == null) {
-                Process process = new ProcessBuilder("dash-cli", "getnewaddress").start();
+            if (address == null || address.equals("null")) {
+                Process process = new ProcessBuilder("ion-cli", "getnewaddress").start();
                 address = new BufferedReader(new InputStreamReader(process.getInputStream())).readLine();
                 Database.setValue(RECEIVING_ADDRESSES, invoker, address);
             }

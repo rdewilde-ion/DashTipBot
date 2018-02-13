@@ -28,18 +28,18 @@ public class TipCommand extends AbstractCommand {
 
     @Override
     public String getHelp() {
-        return "Tip a user an amount of Dash which they may withdraw.";
+        return "Tip a user an amount of ION which they may withdraw.";
     }
 
     @Override
     public String getFullHelp() {
-        return "Tip a user an amount of Dash which they may withdraw.\n" +
-                "You may specify a Dash, USD, beer, or other amount.\n" +
+        return "Tip a user an amount of ION which they may withdraw.\n" +
+                "You may specify a ION, USD, beer, or other amount.\n" +
                 "Examples:\n" +
                 "    " + Bot.DISCORD_CLIENT.getOurUser().mention() + "tip " + Bot.MAINTAINER.mention() + " a " + Unit.COFFEE.name().toLowerCase() + "\n" +
                 "    " + Bot.DISCORD_CLIENT.getOurUser().mention() + "tip " + Bot.MAINTAINER.mention() + " 2 " + Unit.GBP + "\n" +
                 "    " + Bot.DISCORD_CLIENT.getOurUser().mention() + "tip " + Bot.MAINTAINER.mention() + " 1 " + Unit.USD + "\n" +
-                "    " + Bot.DISCORD_CLIENT.getOurUser().mention() + "tip " + Bot.MAINTAINER.mention() + " .01 Dash";
+                "    " + Bot.DISCORD_CLIENT.getOurUser().mention() + "tip " + Bot.MAINTAINER.mention() + " .01 ION";
     }
 
     @Override
@@ -54,13 +54,11 @@ public class TipCommand extends AbstractCommand {
                 user = FormatHelper.getUserFromMention(argument);
                 if (user != null) recipients.add(user);
                 if (unit == null) unit = Unit.getUnitForName(argument);
-                else return "Too many units are specified.";
                 if (amount == null) amount = FormatHelper.softParseDouble(argument);
-                else return "Too many amounts specified";
             }
             if (amount == null) amount = 1D;
             if (unit == null) {
-                if (amount < Unit.USD.getDashAmount() * 5) unit = Unit.DASH;
+                if (amount < Unit.USD.getIONAmount() * 5) unit = Unit.ION;
                 else return "Please specify a unit to tip in.";
             }
             if (recipients.isEmpty()) return "Please specify a user by mentioning him or her, then a number and unit.";
@@ -87,22 +85,22 @@ public class TipCommand extends AbstractCommand {
         Unit unit = Unit.getUnitForName(name[2]);
         if (unit == null) return;
         if (completeTransaction(event.getAuthor(), event.getChannel(), amount, unit, Collections.singleton(event.getMessage().getAuthor())) != null) {
-            TIP_AMOUNT.compute(event.getMessageID(), (aLong, aDouble) -> (aDouble == null ? 0 : aDouble) + amount * unit.getDashAmount());
+            TIP_AMOUNT.compute(event.getMessageID(), (aLong, aDouble) -> (aDouble == null ? 0 : aDouble) + amount * unit.getIONAmount());
             if (event.getMessage().getReactions().stream().map(IReaction::getCount).reduce((integer, integer2) -> integer + integer2).orElse(0) > 3) {
                 RequestBuffer.request(() -> {
                     TALLY_MESSAGE.computeIfAbsent(event.getMessageID(), aLong -> event.getChannel().sendMessage("Tallying tips for " + event.getAuthor().mention() + "'s message"));
-                    RequestBuffer.request(() -> TALLY_MESSAGE.get(event.getMessageID()).edit("A total of " + TIP_AMOUNT.get(event.getMessageID()) + " Dash has been tipped to " + event.getAuthor().mention()));
+                    RequestBuffer.request(() -> TALLY_MESSAGE.get(event.getMessageID()).edit("A total of " + TIP_AMOUNT.get(event.getMessageID()) + " ION has been tipped to " + event.getAuthor().mention()));
                 });
             }
-            TIP_AMOUNT.compute(event.getMessageID(), (aLong, aDouble) -> (aDouble == null ? 0 : aDouble) + amount * unit.getDashAmount());
+            TIP_AMOUNT.compute(event.getMessageID(), (aLong, aDouble) -> (aDouble == null ? 0 : aDouble) + amount * unit.getIONAmount());
         }
     }
 
     private static String completeTransaction(IUser invoker, IChannel channel, double amount, Unit unit, Collection<IUser> recipients) throws IOException {
         double currentWallet = Double.parseDouble(Database.getValue(BALANCES, invoker, "0"));
-        double tipAmount = unit.getDashAmount() * amount;
+        double tipAmount = unit.getIONAmount() * amount;
         if (tipAmount * recipients.size() > currentWallet) return "You don't have enough for that.";
-        Database.setValue(BALANCES, invoker, String.valueOf(currentWallet - tipAmount * recipients.size()));
+        Database.setValue(BALANCES, invoker, String.valueOf((float)(currentWallet - tipAmount * recipients.size())));
         for (IUser recipient : recipients) {
             Database.setValue(BALANCES, recipient, String.valueOf(Double.valueOf(Database.getValue(BALANCES, recipient, "0")) + tipAmount));
             TransactionLog.log("tip of " + tipAmount + " from " + invoker.getStringID() + " to " + recipient.getStringID());

@@ -51,7 +51,7 @@ public class Bot {
             DISCORD_CLIENT = new ClientBuilder().withToken(Config.TOKEN).login();
             DISCORD_CLIENT.getDispatcher().registerListener(Bot.class);
             DISCORD_CLIENT.getDispatcher().waitFor(ReadyEvent.class);
-            MAINTAINER = DISCORD_CLIENT.getUserByID(191677220027236352L);
+            MAINTAINER = DISCORD_CLIENT.getUserByID(395889753654034442L); //188398039327571968
             new Reflections("com.github.nija123098.tipbot.commands").getSubTypesOf(AbstractCommand.class).stream().map((clazz) -> {
                 try {
                     return clazz.newInstance();
@@ -65,7 +65,7 @@ public class Bot {
                 HelpCommand.FULL_HELP_MAP.put(name, command.getFullHelp());
             }));
         } catch (Exception e) {
-            throw new Error("Exception during bot initialization", e);
+            throw new Error("Exception during bot initialization: " + e.getMessage(), e);
         }
     }
 
@@ -83,7 +83,10 @@ public class Bot {
             COMMANDS_OCCURRING.incrementAndGet();
         }
 
-        if (!PermissionUtils.hasPermissions(event.getChannel(), DISCORD_CLIENT.getOurUser(), Permissions.SEND_MESSAGES, Permissions.READ_MESSAGES)) return;
+        if (!PermissionUtils.hasPermissions(event.getChannel(), DISCORD_CLIENT.getOurUser(), Permissions.SEND_MESSAGES, Permissions.READ_MESSAGES)) {
+            RequestBuffer.request(() -> event.getChannel().sendMessage("I need to be able to read messages in this channel in order to operate."));
+            return;
+        }
         if (!PermissionUtils.hasPermissions(event.getChannel(), DISCORD_CLIENT.getOurUser(), Permissions.ADD_REACTIONS)) {
             RequestBuffer.request(() -> event.getChannel().sendMessage("I need to be able to send reactions in this channel in order to operate."));
             return;
