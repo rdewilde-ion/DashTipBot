@@ -1,4 +1,4 @@
-# DashTipBot
-A Discord bot for tipping people in the cryptocurrency Dash.
+# IONTipBot
+A Discord bot for tipping people in the cryptocurrency ION.
 
-DashTipBot is a simple bot designed for exclusively tipping.
+IONTipBot is a simple bot designed for exclusively tipping.
